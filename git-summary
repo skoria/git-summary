@@ -18,12 +18,9 @@ NC='\e[0m' # No Color
 usage() {
     sed 's/^        //' <<EOF
         git-summary - summarize git repos at some path
-
         Usage: git-summary.sh [-h] [-l] [-d] [-q] [path]
-
         Given a path to a folder containing one or more git repos,
         print a status summary table showing, for each repo:
-
           - the folder name
           - the currently checked out branch
           - a short 2-column status string showing whether there are:
@@ -36,25 +33,18 @@ usage() {
                 - unpulled commits for the current branch  "_v"
                 - unpushed commits for the current branch  "_^"
                 - (nothing)                                "_ "
-
         Arguments:
-
           -h    Print this message
-
           -l    Local operation only. Without this the script runs
                 "git fetch" in each repo before checking for unpushed/
                 unpulled commits.  As this can be time consuming, this
                 flag lets you skip that.
-
           -d    Deep lookup. Will search within the entire tree of the
                 current folder.
-
           -q    Print nothing for repos that are up to date. Also print
                 a final tally.
-
           path  Path to folder containing git repos; if omitted, the
                 current working directory is used.
-
 EOF
 }
 
@@ -83,7 +73,7 @@ git_summary() {
     local repos=$(list_repos $target $deeplookup)
 
     if [[ -z $repos ]]; then
-    	exit
+        exit
     fi
 
     # We compute the repo names and branch names here so we can
@@ -132,6 +122,11 @@ detect_OS() {
     readlink_cmd="readlink"
     dirname_cmd="dirname"
     gawk_cmd="gawk"
+  elif [ "$(expr substr $(uname -s) 1 5)" == "MINGW" ]; then  # Mingw
+    OS=MINGW
+    readlink_cmd="readlink"
+    dirname_cmd="dirname"
+    gawk_cmd="gawk"
   else
     echo "Cannot identify OS."
     exit 1
@@ -143,6 +138,8 @@ GIT4WINDOWS=1
 detect_Git4Windows() {
     if [[ "$OS" == "CYGWIN" && "$(git --version)" == *"windows"* ]]; then
        GIT4WINDOWS=0
+    elif [[ "$OS" == "MINGW64_NT-6.3" && "$(git --version)" == *"windows"* ]]; then
+        GIT4WINDOWS=0
   fi
 }
 
@@ -264,8 +261,8 @@ repo_branch () {
 # Given a path to a folder containing some git repos, compute the
 # names of the folders which actually do contain git repos.
 list_repos () {
-	# https://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
-	git_directories=()
+        # https://stackoverflow.com/questions/23356779/how-can-i-store-find-command-result-as-arrays-in-bash
+        git_directories=()
 
   local find_cmd
   if [ $deeplookup -eq 0 ]; then
@@ -274,14 +271,14 @@ list_repos () {
     find_cmd="find $1 -type d -name .git -print0"
   fi
 
-	while IFS=  read -r -d $'\0'; do
-		git_directories+=("$REPLY")
-	done < <($find_cmd 2>/dev/null)
+        while IFS=  read -r -d $'\0'; do
+                git_directories+=("$REPLY")
+        done < <($find_cmd 2>/dev/null)
 
-	for i in ${git_directories[*]}; do
-		if [[ ! -z $i ]]; then
-    		$dirname_cmd -z $i | xargs -0 -L1
-    	fi
+        for i in ${git_directories[*]}; do
+                if [[ ! -z $i ]]; then
+                $dirname_cmd -z $i | xargs -0 -L1
+        fi
   done
 }
 
@@ -304,4 +301,3 @@ max_len () {
 trap "printf '$NC'" EXIT
 
 git_summary $@
-
